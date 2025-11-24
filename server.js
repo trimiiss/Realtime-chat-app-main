@@ -3,30 +3,42 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
-const formatMessage = require('./utills/messages'); // Ensure folder name matches (utils vs utills)
+
+const formatMessage = require('./utills/messages');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require('./utills/users');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
 
-// Serve static files from the public folder
+// FIX: Allow up to 50MB files (images)
+const io = socketio(server, {
+  maxHttpBufferSize: 5e7 
+});
+
+// Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 const botname = 'TrimChat Bot';
+// Bot uses a fixed robot image
+const botAvatar = `https://api.dicebear.com/9.x/bottts/svg?seed=${botname}`;
 
 io.on('connection', (socket) => {
-  socket.on('joinRoom', ({ username, room }) => {
-    const user = userJoin(socket.id, username, room);
+  
+  // LISTEN FOR JOIN: Accept customAvatar
+  socket.on('joinRoom', ({ username, room, customAvatar }) => {
+    
+    // Pass the image to the user creation logic
+    const user = userJoin(socket.id, username, room, customAvatar);
+    
     socket.join(user.room);
 
     // Welcome current user
-    socket.emit('message', formatMessage(botname, 'Welcome to TrimChat!'));
+    socket.emit('message', formatMessage(botname, 'Welcome to TrimChat!', botAvatar));
 
     // Broadcast to others
     socket.broadcast
       .to(user.room)
-      .emit('message', formatMessage(botname, `${user.username} has joined the chat`));
+      .emit('message', formatMessage(botname, `${user.username} has joined the chat`, botAvatar));
 
     // Send users and room info
     io.to(user.room).emit('roomUsers', {
@@ -35,66 +47,47 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Listen for chat messages
+  // Listen for chatMessage
   socket.on('chatMessage', (msg) => {
     const user = getCurrentUser(socket.id);
     if (user) {
-      const message = formatMessage(user.username, msg);
-      message.status = 'delivered';
-      io.to(user.room).emit('message', message);
+      // Send the message with the User's avatar
+      io.to(user.room).emit('message', formatMessage(user.username, msg, user.avatar));
     }
   });
 
-  // --- NEW: Handle Message Deletion ---
-  socket.on('deleteMessage', (msgId) => {
-    const user = getCurrentUser(socket.id);
-    if (user) {
-      // In a real app, you'd verify user owns the message in DB here
-      io.to(user.room).emit('messageDeleted', msgId);
-    }
-  });
-
-  // --- NEW: Handle Message Editing ---
-  socket.on('editMessage', ({ id, text }) => {
-    const user = getCurrentUser(socket.id);
-    if (user) {
-      // Broadcast the update
-      io.to(user.room).emit('messageUpdated', {
-        id,
-        text,
-        owner: user.username
-      });
-    }
-  });
-
-  // Typing indicator events
+  // Typing Events
   socket.on('typing', () => {
     const user = getCurrentUser(socket.id);
-    if (user) {
-      socket.broadcast.to(user.room).emit('typing', { username: user.username });
-    }
+    if (user) socket.broadcast.to(user.room).emit('typing', { username: user.username });
   });
 
   socket.on('stopTyping', () => {
     const user = getCurrentUser(socket.id);
-    if (user) {
-      socket.broadcast.to(user.room).emit('stopTyping', { username: user.username });
-    }
+    if (user) socket.broadcast.to(user.room).emit('stopTyping', { username: user.username });
   });
 
-  // Read receipt event
+  // Delete/Edit Events
+  socket.on('deleteMessage', (msgId) => {
+    const user = getCurrentUser(socket.id);
+    if (user) io.to(user.room).emit('messageDeleted', msgId);
+  });
+
+  socket.on('editMessage', ({ id, text }) => {
+    const user = getCurrentUser(socket.id);
+    if (user) io.to(user.room).emit('messageUpdated', { id, text });
+  });
+
   socket.on('readMessage', (msgId) => {
     const user = getCurrentUser(socket.id);
-    if (user) {
-      io.to(user.room).emit('messageStatusUpdated', { id: msgId, status: 'Seen' });
-    }
+    if (user) io.to(user.room).emit('messageStatusUpdated', { id: msgId, status: 'Seen' });
   });
 
-  // Handle disconnect
+  // Disconnect
   socket.on('disconnect', () => {
     const user = userLeave(socket.id);
     if (user) {
-      io.to(user.room).emit('message', formatMessage(botname, `${user.username} has left the chat`));
+      io.to(user.room).emit('message', formatMessage(botname, `${user.username} has left the chat`, botAvatar));
       io.to(user.room).emit('roomUsers', {
         room: user.room,
         users: getRoomUsers(user.room),

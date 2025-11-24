@@ -17,11 +17,26 @@
         <h1><i class="fas fa-smile"></i> TrimChat</h1>
       </header>
       <main class="join-main">
-        <form id="join-form" action="chat.html" method="GET">
+        <form id="join-form">
+          
+          <div class="avatar-preview-container">
+            <label style="display:block; margin-bottom: 10px;">Profile Picture</label>
+            <img id="avatar-preview" src="https://api.dicebear.com/9.x/initials/svg?seed=Guest" alt="Avatar Preview" />
+            
+            <div class="file-input-wrapper">
+              <label for="avatar-upload" class="btn-small">
+                <i class="fas fa-camera"></i> Choose from Gallery
+              </label>
+              <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+            </div>
+            <p id="file-error" style="color: #e74c3c; display: none; font-size: 13px; margin-top: 5px;">Image too big (Max 1MB)</p>
+          </div>
+
           <div class="form-control">
             <label for="username">Username</label>
-            <input type="text" name="username" id="username" placeholder="Enter username..." required />
+            <input type="text" name="username" id="username" placeholder="Enter username..." required autocomplete="off" />
           </div>
+
           <div class="form-control">
             <label for="room">Room</label>
             <select name="room" id="room">
@@ -37,5 +52,71 @@
         </form>
       </main>
     </div>
+
+    <script>
+      const joinForm = document.getElementById('join-form');
+      const usernameInput = document.getElementById('username');
+      const roomInput = document.getElementById('room');
+      const avatarPreview = document.getElementById('avatar-preview');
+      const fileInput = document.getElementById('avatar-upload');
+      const fileError = document.getElementById('file-error');
+
+      // Clear old storage on load
+      localStorage.removeItem('customAvatar');
+      let selectedFile = null;
+
+      // Handle File Selection
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 1MB check for browser performance
+        if (file.size > 1024 * 1024) {
+            fileError.style.display = 'block';
+            selectedFile = null;
+            return;
+        }
+        fileError.style.display = 'none';
+        selectedFile = file;
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (ev) => { avatarPreview.src = ev.target.result; };
+        reader.readAsDataURL(file);
+      });
+
+      // Handle default avatar preview
+      usernameInput.addEventListener('input', () => {
+        if (!selectedFile) {
+            const user = usernameInput.value.trim() || 'Guest';
+            avatarPreview.src = `https://api.dicebear.com/9.x/initials/svg?seed=${user}`;
+        }
+      });
+
+      // Handle Submit
+      joinForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Prevent immediate reload
+        const username = usernameInput.value;
+        const room = roomInput.value;
+
+        if (selectedFile) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    // Save image string to browser memory
+                    localStorage.setItem('customAvatar', event.target.result);
+                    // Go to chat page
+                    window.location.href = `chat.html?username=${username}&room=${room}`;
+                } catch (err) {
+                    alert("Image error: Try a smaller image.");
+                }
+            };
+            reader.readAsDataURL(selectedFile);
+        } else {
+            localStorage.removeItem('customAvatar');
+            window.location.href = `chat.html?username=${username}&room=${room}`;
+        }
+      });
+    </script>
   </body>
 </html>
