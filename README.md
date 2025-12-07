@@ -1,6 +1,6 @@
 # TrimChat AI - Realtime Chat Application
 
-> **🎥 Video Demo**: [Insert your YouTube URL here]
+> **🎥 Video Demo**: [DEMO](https://youtu.be/HqtXw6dBCH8)
 
 A modern, full‑stack realtime chat application built with **HTML**, **CSS**, **Vanilla JavaScript**, **Node.js**, **Socket.io**, and **SQLite**. Features include instant messaging, secure authentication, avatar customization, typing indicators, and a built‑in AI chatbot.
 
