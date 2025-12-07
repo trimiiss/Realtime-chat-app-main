@@ -1,5 +1,5 @@
 // utils/messages.js
-const moment = require('moment');
+// utils/messages.js
 
 function formatMessage(username, text, avatar) {
   return {
@@ -7,7 +7,7 @@ function formatMessage(username, text, avatar) {
     username,
     text,
     avatar, // The avatar URL
-    time: moment().format('h:mm a'),
+    time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
     status: 'sent'
   };
 }

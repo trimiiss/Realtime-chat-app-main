@@ -7,7 +7,7 @@ function userJoin(id, username, room, customAvatar) {
   let avatar;
 
   // 1. Check if a custom photo was sent
-  if (customAvatar && customAvatar.length > 100) {
+  if (customAvatar) {
     avatar = customAvatar;
   } else {
     // 2. If no photo, use Initials (Letters)

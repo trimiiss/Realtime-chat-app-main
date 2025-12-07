@@ -1,16 +1,4 @@
-# Node modules
 node_modules/
-
-# Environment Variables
 .env
-
-# Database
 chat.db
-
-# Client Build Output
-client/dist/
-client/node_modules/
-
-# Dependency locks (optional to ignore)
 package-lock.json
-.env

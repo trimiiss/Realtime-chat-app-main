@@ -88,11 +88,19 @@ function findUserByUsername(username, callback) {
   });
 }
 
+function updateUserAvatar(id, avatar, callback) {
+  const sql = `UPDATE users SET avatar = ? WHERE id = ?`;
+  db.run(sql, [avatar, id], (err) => {
+    callback(err);
+  });
+}
+
 module.exports = {
   saveMessage,
   getRoomMessages,
   updateMessage,
   deleteMessage,
   createUser,
-  findUserByUsername
+  findUserByUsername,
+  updateUserAvatar
 };

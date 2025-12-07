@@ -3,7 +3,15 @@ require('dotenv').config();
 const path = require('path');
 const http = require('http');
 const express = require('express');
+const cors = require('cors');
 const socketio = require('socket.io');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 
 const formatMessage = require('./utils/messages');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require('./utils/users');
@@ -22,9 +30,10 @@ const io = socketio(server, {
   }
 });
 
-const cors = require('cors');
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -65,12 +74,12 @@ io.on('connection', (socket) => {
       users: getRoomUsers(user.room),
     });
 
-    // Load Chat History
-    getRoomMessages(user.room, (history) => {
-      history.forEach((msg) => {
-        socket.emit('message', msg);
-      });
-    });
+    // Load Chat History - DISABLED per user request
+    // getRoomMessages(user.room, (history) => {
+    //   history.forEach((msg) => {
+    //     socket.emit('message', msg);
+    //   });
+    // });
   });
 
   // Listen for chatMessage
@@ -93,7 +102,7 @@ io.on('connection', (socket) => {
         // Run AI response asynchronously
         (async () => {
           // Send "Typing..." indicator
-          io.to(user.room).emit('typing', { username: botname });
+          io.to(user.room).emit('typing', { username: botname, avatar: botAvatar });
 
           const aiReply = await getAIResponse(msg);
           
@@ -116,7 +125,7 @@ io.on('connection', (socket) => {
   // Typing Events
   socket.on('typing', () => {
     const user = getCurrentUser(socket.id);
-    if (user) socket.broadcast.to(user.room).emit('typing', { username: user.username });
+    if (user) socket.broadcast.to(user.room).emit('typing', { username: user.username, avatar: user.avatar });
   });
 
   socket.on('stopTyping', () => {

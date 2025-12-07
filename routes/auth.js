@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { createUser, findUserByUsername } = require('../utils/db');
+const multer = require('multer');
+const path = require('path');
+const { createUser, findUserByUsername, updateUserAvatar } = require('../utils/db');
 const { createAvatar } = require('../utils/users'); // Reuse avatar logic? Or just use Gravatar/Robohash directly.
 // Actually, let's just generate a robohash if none provided.
 
@@ -31,7 +33,7 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create Avatar
-    const avatar = `https://robohash.org/${username}.png`;
+    const avatar = req.body.avatar || `https://robohash.org/${username}.png`;
 
     // Save User
     createUser(username, hashedPassword, avatar, (err, id) => {
@@ -100,6 +102,46 @@ router.get('/me', (req, res) => {
   } catch (e) {
     res.json(null);
   }
+});
+
+// UPDATE AVATAR
+router.put('/avatar', (req, res) => {
+  const token = req.header('x-auth-token');
+  if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { avatar } = req.body;
+    
+    updateUserAvatar(decoded.id, avatar, (err) => {
+      if(err) return res.status(500).json({ msg: 'Server Error' });
+      res.json({ success: true });
+    });
+  } catch (e) {
+    res.status(400).json({ msg: 'Token is not valid' });
+  }
+});
+
+// FILE UPLOAD CONFIG
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    // timestamp-filename.ext
+    cb(null, Date.now() + '-' + file.originalname)
+  }
+});
+const upload = multer({ storage: storage });
+
+// UPLOAD ENDPOINT
+router.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ msg: 'No file uploaded' });
+  }
+  // Return the URL for the frontend
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl });
 });
 
 module.exports = router;

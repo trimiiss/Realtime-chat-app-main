@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrimChat AI</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-container">
+            <h1 id="auth-title">Welcome Back</h1>
+            <p id="auth-subtitle">Login to continue chatting</p>
+
+            <div id="auth-error" class="error-msg hidden"></div>
+
+            <form id="auth-form">
+                <!-- Avatar Setup (Register Only) -->
+                <div id="avatar-section" class="hidden">
+                    <img id="avatar-preview" src="" alt="avatar" class="avatar-large">
+                    <div class="avatar-controls">
+                        <button type="button" id="btn-shuffle" title="Shuffle Avatar"><i class="fas fa-dice"></i>
+                            Shuffle</button>
+                        <label class="btn-upload" title="Upload Avatar">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload
+                            <input type="file" id="file-upload" accept="image/*" hidden>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+
+                <button type="submit" id="btn-submit">Login</button>
+            </form>
+
+            <div class="auth-switch">
+                <span id="switch-text">Don't have an account? </span>
+                <button id="btn-switch">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOBBY SCREEN (Room Selection) -->
+    <div id="lobby-screen" class="screen hidden">
+        <div class="lobby-container">
+            <div class="lobby-header">
+                <div class="avatar-wrapper">
+                    <img id="lobby-avatar" src="" class="avatar-large">
+                    <button id="lobby-shuffle" class="btn-icon-small bottom-right"><i class="fas fa-dice"></i></button>
+                    <label id="lobby-upload" class="btn-icon-small bottom-left">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <input type="file" id="lobby-file-upload" hidden>
+                    </label>
+                </div>
+                <h1 id="lobby-greeting">Hello, User!</h1>
+                <p>Select a room to join</p>
+            </div>
+
+            <form id="lobby-form">
+                <label>Room</label>
+                <select id="room-select">
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Python">Python</option>
+                    <option value="PHP">PHP</option>
+                    <option value="C#">C#</option>
+                    <option value="Ruby">Ruby</option>
+                    <option value="Java">Java</option>
+                </select>
+                <button type="submit" class="btn-primary">Join Chat</button>
+            </form>
+
+            <button id="btn-logout-lobby" class="btn-text">Logout</button>
+        </div>
+    </div>
+
+    <!-- CHAT SCREEN -->
+    <div id="chat-screen" class="screen hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle"></div>
+                <h2>TrimChat</h2>
+            </div>
+
+            <div class="sidebar-content">
+                <h3>Room Users</h3>
+                <ul id="users-list">
+                    <!-- User items injected here -->
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="btn-theme"><i class="fas fa-moon"></i> <span>Dark Mode</span></button>
+                <button id="btn-avatar-random"><i class="fas fa-dice"></i> <span>New Avatar</span></button>
+                <button id="btn-logout-chat" class="btn-danger"><i class="fas fa-sign-out-alt"></i> <span>Log
+                        Out</span></button>
+            </div>
+        </aside>
+
+        <!-- Main Chat -->
+        <main class="chat-main">
+            <header class="chat-header">
+                <div class="room-info">
+                    <span class="status-dot"></span>
+                    <h2 id="room-name">JavaScript Room</h2>
+                </div>
+                <button id="btn-leave">Leave Room</button>
+            </header>
+
+            <div id="chat-messages" class="chat-messages">
+                <!-- Messages injected here -->
+            </div>
+
+            <div class="chat-input-area">
+                <form id="chat-form">
+                    <input type="text" id="msg-input" placeholder="Type a message... (@bot for AI)" autocomplete="off">
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Socket.io Client Library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Main Logic -->
+    <script src="js/main.js"></script>
+</body>
+
+</html>
